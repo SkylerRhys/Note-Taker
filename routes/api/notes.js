@@ -2,8 +2,6 @@ const notes = require('express').Router();
 const {readFile, writeFile} = require('fs').promises;
 const db = './db/db.json';
 
-const uuid = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-
 notes.get('/notes', (req, res) => {
     readFile(db).then((data) => res.json(JSON.parse(data)));
 });
@@ -15,12 +13,17 @@ notes.post('/notes', (req, res) => {
         const newNote = {
             title,
             text,
-            id: uuid(),
+            id: crypto.randomUUID(),
         };
 
         readFile(db)
-        .then(data => res.json(JSON.parse(data)))
-        .then(data)
+        .then(data => JSON.parse(data))
+        .then(parseData => {
+            parseData.push(newNote);
+            return writeFile(db, JSON.stringify(parseData));
+        })
+        .then(() => res.json('Job done!'))
+        .catch(err => res.status(500).json(err.message));
     };
 });
 
